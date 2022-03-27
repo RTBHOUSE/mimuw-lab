@@ -5,7 +5,7 @@
 Write a simple application that sometimes (once every 30 calls) processes the request slower.
 Monitor number of requests and processing time.
 Create dashboard in grafana that will present: 
-- mean, 95-percentile, 99-percentile of processing time
+- mean, 90-percentile and max of processing time
 - number of requests
 
 ## Run grafana with graphite in docker
@@ -37,7 +37,7 @@ http://127.0.0.1:3000/
 
 Add datasource with type: graphite and ip address: http://localhost
 
-###Check
+### Check
 
 Send simple single metric:
 
@@ -50,14 +50,4 @@ http://localhost/render?from=-10mins&until=now&target=stats.test
 
 verify on grafana:
 http://localhost:3000/render?from=-10mins&until=now&target=stats.test
-
-###Write an application 
-
-Example in python:
-
-The fallowing dependencies should be installed:
-
-```bash
-python3 -m pip install fastapi uvicorn statsd
-```
 
