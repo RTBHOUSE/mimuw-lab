@@ -28,6 +28,15 @@ You may use any programming language to solve the task. However, python is great
 ## Hints
 
 <details>
+    <summary>Hint 0 /docker in docker</summary>
+
+    ```bash
+    docker run -it --rm -v /var/run/docker.sock:/var/run/docker.sock ...
+    ```
+
+</details>
+
+<details>
     <summary>Hint 1 /spoiler</summary>
 
     You need an image that will be used for users' programs compilation.
