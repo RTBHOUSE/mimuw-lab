@@ -1,6 +1,6 @@
 # Application monitoring with graphite and grafana
 
-## Task
+## Task 1
 
 Write a simple application that sometimes (once every 30 calls) processes the request slower.
 Monitor number of requests and processing time.
@@ -50,4 +50,11 @@ http://localhost/render?from=-10mins&until=now&target=stats.test
 
 verify on grafana:
 http://localhost:3000/render?from=-10mins&until=now&target=stats.test
+
+## Task 2
+
+- Add /health endpoint. 
+- Create LB (similar to lab03) which checks created endpoint
+- Verify if /health returns unhealthy state - LB will not forward traffic
+- Add HEALTHCHECK in Dockerfile
 
