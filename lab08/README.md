@@ -296,7 +296,7 @@ failing? Hint: you may need to use *[Producer API](https://kafka.apache.org/31/j
 and *[Consumer API](https://kafka.apache.org/31/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html)* for this task.
 
 ## 8. Ensuring high availability (optional)
-Create a cluster of 3 brokers. Add a topic with replication factor 2. Chek what
+Create a cluster of 3 brokers. Add a topic with replication factor 2. Check what
 happens when you send a message with one of the brokers down. What if two brokers are down?
 Read about availability and durability guarantees *[here](https://kafka.apache.org/documentation/#design_ha)*.
 Test different values of `acks`.
