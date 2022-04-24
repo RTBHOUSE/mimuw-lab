@@ -285,15 +285,17 @@ for msg in consumer:
     producer.send('balance', b'%d' % balance[account_number], partition=account_number)
     print(f'current balance for account {account_number} is {balance[account_number]}')
 ```
-
-(Optional) What will happen when you restart balance_calculator.py? How can you improve it to guarantee
-that balance has the same number of messages as transactions and the n-th message in balance
-represents the exact balance after n transactions, even with balance_calculator.py occasionally
-failing? Hint: you may need to use *[Producer API](https://kafka.apache.org/31/javadoc/org/apache/kafka/clients/producer/KafkaProducer.html)*
-and *[Consumer API](https://kafka.apache.org/31/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html)* for this task.
 </details>
 
-## 7. Ensuring high availability (optional)
+## 8. Ensuring exactly-once delivery semantics (optional)
+
+What will happen when you restart your app? How can you improve it to guarantee
+that balance has the same number of messages as transactions and the n-th message in balance
+represents the exact balance after n transactions, even with processing app occasionally
+failing? Hint: you may need to use *[Producer API](https://kafka.apache.org/31/javadoc/org/apache/kafka/clients/producer/KafkaProducer.html)*
+and *[Consumer API](https://kafka.apache.org/31/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html)* for this task.
+
+## 9. Ensuring high availability (optional)
 Create a cluster of 3 brokers. Add a topic with replication factor 2. Chek what
 happens when you send a message with one of the brokers down. What if two brokers are down?
 Read about availability and durability guarantees *[here](https://kafka.apache.org/documentation/#design_ha)*.
