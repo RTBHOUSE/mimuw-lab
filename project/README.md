@@ -17,7 +17,7 @@ User actions (i.e. VIEWs and BUYs) are sent as user tag events in the following 
 <user_tag>
 
 {
-    "time": int64,
+    "time": string,   // format: "2022-03-22T12:15:00.000Z" (millisecond precision)
     "cookie": string,
     "country": string,
     "device": PC | MOBILE | TV,
@@ -37,6 +37,7 @@ Time ranges in request parameters are of the following format:
 * `<time_range>`
   * type: String
   * format: `<datetime>_<datetime>`
+    * [inclusive, exclusive) i.e. [closed, open)
   * example: `2022-03-22T12:15:00.000_2022-03-22T12:30:00.000`
     * it represents 15 minute time range
 * `<datetime>`
@@ -71,8 +72,13 @@ We should provide an endpoint that allows adding user tag events, one at a singl
 
 ### Data Characteristics
 
-* number of unique cookies ~ 1M
-* ...
+* number of unique cookies ~= 1_000_000
+* number of unique countries = 100
+* number of unique devices = 3
+* number of unique actions = 2
+* number of unique origins = 1_000
+* number of unique brands = 250
+* number of unique product_categories = 67
 
 ### Recommendations
 
@@ -117,7 +123,7 @@ Allezon plans to build a recommendation engine in the near future. At the start 
 * max throughput: 1000 req/s
 * request timeout: 200 ms
 * data latency: 10 s
-  * i.e. time between accepting an input event and serving it in the query responses should be less than 10 s.
+  * i.e. we can query about events published 1 minute ago
 * We have to keep 200 most recent VIEWs and 200 most recent BUYs for each cookie (older events can be discarded).
   * There is a separate limit for each action type.
 
@@ -127,14 +133,6 @@ Allezon plans to build a recommendation engine in the near future. At the start 
 * Use a key-value store.
 
 ## Use Case 3: Aggregated User Actions (Statistics)
-
-### Important Info
-
-**QUERIES FOR THIS USE CASE WON'T BE GENERATED BEFORE 2022-04-25.**
-
-Please focus and implement use cases 1 and 2 first.
-
-In case you've finished use cases 1 and 2 already, please let us know via email and we will enable generating events for the use case 3.
 
 ### Business Context
 
@@ -222,10 +220,10 @@ We want to get aggregated stats about user actions matching some criteria and gr
 
 * Required parameters
   * time_range = <time_from>_<time_to>
-    * <time_from> and <time_to> have to be proper 1m bucket ends.
-      * example: `2022-03-22T12:15:00_2022-03-22T12:30:00`
-        * the above string represents 15 minute time range [12:15, 12:30)
-    * time_range consists of non-overlapping, consecutive 1m buckets
+    * <time_from> and <time_to> have to be proper 1m bucket ends (with second precision).
+      * semantics: time_range consists of non-overlapping, consecutive 1m buckets.
+      * example: `2022-03-22T12:25:00_2022-03-22T12:28:00`
+        * the above string represents 3 minute time range [12:25, 12:28) consisting of buckets: [12:25, 12:26), [12:26, 12:27), [12:27, 12:28)
   * action
     * allowed values: {VIEW, BUY}
   * aggregates
@@ -246,19 +244,23 @@ We want to get aggregated stats about user actions matching some criteria and gr
       GROUP BY 1m_bucket(time), action, [origin, brand_id, category_id]
       ORDER BY 1m_bucket(time)
   ```
+* Additional requirements
+  * We want to be able to answer queries about events from last 24 h (logical time).
+    * i.e. after accepting an input event with `time = T`, we can discard data related to old events: `time < T - 24h`.
+      * It means that you should keep data needed to compute aggregates for 24 h when your process data with the maximum speed (1000 events/s).
 
 ### Request
 
-* POST /aggregates?time_range=<time_range>&action=<action>&aggregates=[<aggregate>]
+* `POST /aggregates?time_range=<time_range>&action=<action>&aggregates=[<aggregate>]`
   * Parameters (query-string)
-    |                   | type   | format               | required | default | info                            |
-    | ----------------- | ------ | -------------------- | -------- | ------- | ------------------------------- |
-    | [qs] time_range   | String | `<time_range>`       | Y        | N/A     | proper 1m bucket ends           |
-    | [qs] action       | enum   | `{VIEW, BUY}`        | Y        | N/A     |                                 |
-    | [qs] aggregates[] | enum[] | `{COUNT, SUM_PRICE}` | Y        | N/A     | repeat to specify more elements |
-    | [qs] origin       | String |                      | N        | null    |                                 |
-    | [qs] brand_id     | String |                      | N        | null    |                                 |
-    | [qs] category_id  | String |                      | N        | null    |                                 |
+    |                   | type   | format               | required | default | info                                    |
+    | ----------------- | ------ | -------------------- | -------- | ------- | --------------------------------------- |
+    | [qs] time_range   | String | `<time_range>`       | Y        | N/A     | second precision, max_length = 10m      |
+    | [qs] action       | enum   | `{VIEW, BUY}`        | Y        | N/A     |                                         |
+    | [qs] aggregates[] | enum[] | `{COUNT, SUM_PRICE}` | Y        | N/A     | repeat to specify more than one aggregate |
+    | [qs] origin       | String |                      | N        | null    |                                         |
+    | [qs] brand_id     | String |                      | N        | null    |                                         |
+    | [qs] category_id  | String |                      | N        | null    |                                         |
 
 ### Response
 
@@ -272,13 +274,33 @@ We want to get aggregated stats about user actions matching some criteria and gr
       [<bucketN>, <filter_col_values>, <aggr_col_values>]]
   }
   ```
+  * Example
+    ```
+    {
+      "columns": ["1m_bucket", "action", "brand_id", "sum_price", "count"],
+      "rows": [
+        ["2022-03-01T00:05:00", "BUY", "Nike", "1000", "3"],
+        ["2022-03-01T00:06:00", "BUY", "Nike", "1500", "4"],
+        ["2022-03-01T00:07:00", "BUY", "Nike", "1200", "2"]
+    }
+    ```
+    * NOTE THAT
+      * First column is called `"1m_bucket"`.
+        * Bucket values have format: `2022-03-01T00:05:00`
+          * They represent bucket start (second precision, full minutes).
+          * Only start of the bucket is needed, because bucket size is fixed (1 minute).
+          * Buckets are inclusive at their beginnings and exclusive at their ends.
+      * Filter columns are in the following order: `"action", "origin", "brand_id", "category_id"`.
+        * Include only those with not-null values (i.e. present in the query, but with the order defined above).
+      * Aggregate columns are listed in the order from the query.
+      * ALL VALUES ARE STRINGS (including aggregates: count, sum_price).
 
 ### Requirements
 
 * max throughput: 1 req/s
 * request timeout: 60 s
-* data latency: 5 m
-  * i.e. we can query about 5 minute old buckets
+* data latency: 1 m
+  * i.e. we can query about events published 1 minute ago
 
 ### Recommendations
 
@@ -310,7 +332,7 @@ There is a single page where you can manage your subscriptions. You can have one
 
 User tags (events) will arrive with the specified throughput, whereas queries (use cases 2 and 3) will be sent with the following frequency:
 
-* UserProfileQuery: one query for every 10 user tags (100 queries/s for the maximum throughput)
+* UserProfileQuery: one query for every 1 user tag (1000 queries/s for the maximum throughput)
 * AggregatesQuery: one query for every 1000 user tags (1 query/s for the maximum throughput)
 
 At the beginning of the subscription some queries may return "empty" results (meaning there are no user tags matching criteria). "Empty" does not mean "with empty response body", but e.g. for UserProfileQuery with empty views and buys lists.
