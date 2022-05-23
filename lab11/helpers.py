@@ -1,6 +1,6 @@
 from typing import List, Optional, Sequence
 
-from mimuw.common_types import Data, Byte
+from common_types import Data, Byte
 
 
 def pad_data(x: Data, size: int, pad_byte=b'0'):

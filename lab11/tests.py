@@ -3,9 +3,9 @@ import random
 
 import pytest
 
-from mimuw.common_types import Data
-from mimuw.object_storage import ObjectStorage
-from mimuw.underlying_api import DataNode, MetadataKvs, Constraints
+from common_types import Data
+from object_storage import ObjectStorage
+from underlying_api import DataNode, MetadataKvs, Constraints
 
 
 def create_sample_file(size: int, prefix='') -> Data:

@@ -1,8 +1,8 @@
 from typing import List, Optional, NamedTuple
 
-from mimuw.common_types import ObjectName, Data, FileName, DataNodeIdx, DataSize
-from mimuw.helpers import pad_data, split_data, erasure_code, reconstruct, split_sequence
-from mimuw.underlying_api import MetadataKvs, DataNode, NodeUnhealthyException
+from common_types import ObjectName, Data, FileName, DataNodeIdx, DataSize
+from helpers import pad_data, split_data, erasure_code, reconstruct, split_sequence
+from underlying_api import MetadataKvs, DataNode, NodeUnhealthyException
 
 
 class DiskUsageStats(NamedTuple):

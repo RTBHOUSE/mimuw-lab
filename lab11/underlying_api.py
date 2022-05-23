@@ -2,7 +2,7 @@ import json
 from dataclasses import dataclass
 from typing import Dict, Optional
 
-from mimuw.common_types import FileName, Data, DataSize, KvsKey, KvsValue
+from common_types import FileName, Data, DataSize, KvsKey, KvsValue
 
 
 class Constraints:

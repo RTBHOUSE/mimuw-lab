@@ -1,7 +1,7 @@
 from typing import List, Optional, NamedTuple
 
-from mimuw.common_types import ObjectName, Data, DataNodeIdx, DataSize
-from mimuw.underlying_api import MetadataKvs, DataNode
+from common_types import ObjectName, Data, DataNodeIdx, DataSize
+from underlying_api import MetadataKvs, DataNode
 
 
 class DiskUsageStats(NamedTuple):
